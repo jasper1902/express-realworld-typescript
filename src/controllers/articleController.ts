@@ -3,6 +3,7 @@ import Article from "../models/Article";
 import { RequestHandler } from "express";
 import { JWTNewRequest } from "./profileController";
 import slugify from "slugify";
+import createHttpError from "http-errors";
 
 export const createArticle: RequestHandler = async (req, res) => {
   const newReq = req as unknown as JWTNewRequest;
@@ -69,4 +70,54 @@ export const deleteArticle: RequestHandler = async (req, res) => {
       message: "Only the author can delete his article",
     });
   }
+};
+
+export const favoriteArticle: RequestHandler = async (req, res) => {
+  const newReq = req as unknown as JWTNewRequest;
+  const id = newReq.userId;
+  const { slug } = req.params;
+
+  const loginUser = await User.findById(id).exec();
+
+  if (!loginUser) {
+    throw createHttpError(404, "User not found");
+  }
+
+  const article = await Article.findOne({ slug }).exec();
+
+  if (!article) {
+    throw createHttpError(404, "Article not found");
+  }
+
+  await loginUser.favorite(article._id);
+  const updatedArticle = await article.updateFavoriteCount();
+
+  return res.status(200).json({
+    article: await updatedArticle.toArticleResponse(loginUser),
+  });
+};
+
+export const unfavoriteArticle: RequestHandler = async (req, res) => {
+  const newReq = req as unknown as JWTNewRequest;
+  const id = newReq.userId;
+  const { slug } = req.params;
+
+  const loginUser = await User.findById(id).exec();
+
+  if (!loginUser) {
+    throw createHttpError(404, "User not found");
+  }
+
+  const article = await Article.findOne({ slug }).exec();
+
+  if (!article) {
+    throw createHttpError(404, "Article not found");
+  }
+
+  await loginUser.unfavorite(article._id);
+  const updatedArticle = await article.updateFavoriteCount();
+
+  return res.status(200).json({
+    article: await updatedArticle.toArticleResponse(loginUser),
+  });
 };

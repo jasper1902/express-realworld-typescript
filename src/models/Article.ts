@@ -1,7 +1,11 @@
 import mongoose, { Model, Types } from "mongoose";
-import User, { IUser } from "./User";
+import User, { IUser, IUserMethods, ToProfileJSON } from "./User";
 
 interface IArticle {
+  toArticleResponse(
+    loginUser: mongoose.Document<unknown, unknown, IUser> &
+      IUser & { _id: Types.ObjectId } & IUserMethods
+  ): unknown;
   title: string;
   description: string;
   body: string;
@@ -15,7 +19,8 @@ interface IArticle {
 }
 
 interface IArticleMethods {
-  toArticleResponse(user: IUser): unknown;
+  toArticleResponse(user: IUser): ToArticleResponse;
+  updateFavoriteCount(): Promise<IArticle>;
 }
 
 type ArticleModel = Model<IArticle, object, IArticleMethods>;
@@ -67,9 +72,22 @@ const articleSchema = new mongoose.Schema<
   { timestamps: true }
 );
 
+interface ToArticleResponse {
+  slug: string;
+  title: string;
+  description: string;
+  body: string;
+  tagList: string[];
+  createdAt: string;
+  updatedAt: string;
+  favorited: boolean;
+  favoritesCount: number;
+  author?: ToProfileJSON;
+}
+
 articleSchema.method(
   "toArticleResponse",
-  async function toArticleResponse(user) {
+  async function toArticleResponse(user): Promise<ToArticleResponse> {
     const authorObj = await User.findById(this.author).exec();
     return {
       slug: this.slug,
@@ -80,9 +98,22 @@ articleSchema.method(
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       favorited: user ? user.isFavourite(this._id) : false,
-      favoritesCount: this.favoritesCount,
+      favoritesCount: this.favouritesCount,
       author: authorObj?.toProfileJSON(user),
     };
+  }
+);
+
+articleSchema.method(
+  "updateFavoriteCount",
+  async function updateFavoriteCount(): Promise<IArticle> {
+    const favoriteCount = await User.countDocuments({
+      favouriteArticles: { $in: [this._id] },
+    });
+
+    this.favouritesCount = favoriteCount;
+
+    return this.save();
   }
 );
 

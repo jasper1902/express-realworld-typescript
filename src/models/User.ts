@@ -14,7 +14,7 @@ export interface IUser {
   followingUsers: string[];
 }
 
-interface IUserMethods {
+export interface IUserMethods {
   toUserResponse(): {
     username: string;
     email: string;
@@ -26,6 +26,8 @@ interface IUserMethods {
   follow(id: Types.ObjectId): Promise<IUser>;
   unfollow(id: Types.ObjectId): Promise<IUser>;
   isFavourite(id: Types.ObjectId): boolean;
+  favorite(id: Types.ObjectId): Promise<IUser>;
+  unfavorite(id: Types.ObjectId): Promise<IUser>;
 }
 
 type UserModel = Model<IUser, object, IUserMethods>;
@@ -179,29 +181,60 @@ userSchema.method("isFollowing", function isFollowing(id: string): boolean {
   return false;
 });
 
-userSchema.method("follow", function follow(id: Types.ObjectId) {
-  if (this.followingUsers.indexOf(id) === -1) {
-    this.followingUsers.push(id);
-  }
-  return this.save();
-});
-
-userSchema.method("unfollow", function unfollow(id: Types.ObjectId) {
-  if (this.followingUsers.indexOf(id) === -1) {
-    this.followingUsers.remove(id);
-  }
-  return this.save();
-});
-
-userSchema.method("isFavourite", function isFavourite(id: Types.ObjectId) {
-  const idStr = id.toString();
-  for (const article of this.favouriteArticles) {
-    if (article.toString() === idStr) {
-      return true;
+userSchema.method(
+  "follow",
+  function follow(id: Types.ObjectId): Promise<IUser> {
+    if (this.followingUsers.indexOf(id) === -1) {
+      this.followingUsers.push(id);
     }
+    return this.save();
   }
-  return false;
-});
+);
+
+userSchema.method(
+  "unfollow",
+  function unfollow(id: Types.ObjectId): Promise<IUser> {
+    if (this.followingUsers.indexOf(id) === -1) {
+      this.followingUsers.remove(id);
+    }
+    return this.save();
+  }
+);
+
+userSchema.method(
+  "isFavourite",
+  function isFavourite(id: Types.ObjectId): boolean {
+    const idStr = id.toString();
+    for (const article of this.favouriteArticles) {
+      if (article.toString() === idStr) {
+        return true;
+      }
+    }
+    return false;
+  }
+);
+
+userSchema.method(
+  "favorite",
+  function favorite(id: Types.ObjectId): Promise<IUser> {
+    if (this.favouriteArticles.indexOf(id) === -1) {
+      this.favouriteArticles.push(id);
+    }
+
+    return this.save();
+  }
+);
+
+userSchema.method(
+  "unfavorite",
+  function unfavorite(id: Types.ObjectId): Promise<IUser> {
+    if (this.favouriteArticles.indexOf(id) !== -1) {
+      this.favouriteArticles.remove(id);
+    }
+
+    return this.save();
+  }
+);
 
 const User = mongoose.model<IUser, UserModel>("User", userSchema);
 export default User;
