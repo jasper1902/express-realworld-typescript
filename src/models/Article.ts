@@ -19,7 +19,7 @@ interface IArticle {
 }
 
 interface IArticleMethods {
-  toArticleResponse(user: IUser): ToArticleResponse;
+  toArticleResponse(user: IUser | false): ToArticleResponse;
   updateFavoriteCount(): Promise<IArticle>;
 }
 

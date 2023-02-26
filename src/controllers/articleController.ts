@@ -121,3 +121,16 @@ export const unfavoriteArticle: RequestHandler = async (req, res) => {
     article: await updatedArticle.toArticleResponse(loginUser),
   });
 };
+
+export const getArticleWithSlug: RequestHandler = async (req, res) => {
+  const { slug } = req.params;
+  const article = await Article.findOne({ slug }).exec();
+  
+  if (!article) {
+    throw createHttpError(401, "Article not found");
+  }
+
+  res.status(200).json({
+    article: await article.toArticleResponse(false),
+  })
+}
