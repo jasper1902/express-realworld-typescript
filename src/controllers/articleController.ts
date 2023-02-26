@@ -125,12 +125,43 @@ export const unfavoriteArticle: RequestHandler = async (req, res) => {
 export const getArticleWithSlug: RequestHandler = async (req, res) => {
   const { slug } = req.params;
   const article = await Article.findOne({ slug }).exec();
-  
+
   if (!article) {
     throw createHttpError(401, "Article not found");
   }
 
   res.status(200).json({
     article: await article.toArticleResponse(false),
-  })
-}
+  });
+};
+
+export const updateArticle: RequestHandler = async (req, res) => {
+  const newReq = req as unknown as JWTNewRequest;
+  const id = newReq.userId;
+  const { slug } = req.params;
+  const { article } = req.body;
+
+  const loginUser = await User.findById(id).exec();
+
+  if (!loginUser) {
+    throw createHttpError(404, "User not found");
+  }
+  const target = await Article.findOne({ slug }).exec();
+
+  if (loginUser._id.toString() !== target?.author.toString()) {
+    throw createHttpError(401, "You are not allowed to update this article");
+  }
+
+  if (target && article) {
+    if (article.title) target.title = article.title;
+    if (article.description) target.description = article.description;
+    if (article.body) target.body = article.body;
+
+    await target.save();
+    res.status(200).json({
+      article: await target.toArticleResponse(loginUser),
+    });
+  } else {
+    res.status(404).json({ message: "Article not found" });
+  }
+};
