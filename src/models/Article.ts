@@ -22,7 +22,7 @@ interface IArticleMethods {
   toArticleResponse(user: IUser | false): ToArticleResponse;
   updateFavoriteCount(): Promise<IArticle>;
   addComment(commentId: Types.ObjectId): Promise<IArticle>;
-  removeComment(commentId: Types.ObjectId): Promise<IArticle>;
+  removeComment(commentId: string): Promise<IArticle>;
 }
 
 type ArticleModel = Model<IArticle, object, IArticleMethods>;
@@ -121,7 +121,7 @@ articleSchema.method(
 
 articleSchema.method(
   "addComment",
-  async function addComment(commentId): Promise<IArticle> {
+  async function addComment(commentId: Types.ObjectId): Promise<IArticle> {
     if (this.comments.indexOf(commentId) === -1) {
       this.comments.push(commentId);
     }
@@ -132,7 +132,7 @@ articleSchema.method(
 
 articleSchema.method(
   "removeComment",
-  async function removeComment(commentId): Promise<IArticle> {
+  async function removeComment(commentId: string): Promise<IArticle> {
     if (this.comments.indexOf(commentId) !== -1) {
       this.comments.remove(commentId);
     }

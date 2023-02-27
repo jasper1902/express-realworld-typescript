@@ -90,3 +90,46 @@ export const getCommentsFromArticle: RequestHandler = async (
     next(error);
   }
 };
+
+export const deleteCommentFromArticle: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const newReq = req as unknown as JWTNewRequest;
+    const userId = newReq.userId;
+    const commenter = await User.findById(userId).exec();
+
+    const { slug, id } = req.params;
+
+    if (!commenter) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const article = await Article.findOne({ slug }).exec();
+    if (!article) {
+      return res.status(404).json({ message: "Article not found" });
+    }
+
+    const comment = await Comment.findById(id).exec();
+
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    if (comment.author._id.toString() !== commenter._id.toString()) {
+      await article.removeComment(id);
+      await Comment.deleteOne({ _id: id });
+      return res.status(200).json({
+        message: "comment has been successfully deleted!!!",
+      });
+    } else {
+      return res.status(403).json({
+        error: "only the author of the comment can delete the comment",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
