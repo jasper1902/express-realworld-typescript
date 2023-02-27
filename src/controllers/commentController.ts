@@ -118,7 +118,7 @@ export const deleteCommentFromArticle: RequestHandler = async (
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    if (comment.author._id.toString() !== commenter._id.toString()) {
+    if (comment.author._id.toString() === commenter._id.toString()) {
       await article.removeComment(id);
       await Comment.deleteOne({ _id: id });
       return res.status(200).json({
