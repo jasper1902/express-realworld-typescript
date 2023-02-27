@@ -168,7 +168,7 @@ export const updateUser: RequestHandler = async (req, res, next) => {
       password: Joi.string(),
       username: Joi.string(),
       bio: Joi.string(),
-      image: Joi.string,
+      image: Joi.string(),
     });
 
     const { error } = userSchema.validate(user);

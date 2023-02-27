@@ -3,7 +3,8 @@ import {
   addCommentsToArticle,
   deleteCommentFromArticle,
   getCommentsFromArticle,
-} from "../controllers/CommentController";
+} from "../controllers/commentController";
+
 import { verifyJWT } from "../middlewares/verifyJWT";
 import { verifyJWTOptional } from "../middlewares/verifyJWTOptional";
 
