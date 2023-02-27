@@ -178,6 +178,7 @@ export const updateArticle: RequestHandler = async (req, res, next) => {
       if (article.title) target.title = article.title;
       if (article.description) target.description = article.description;
       if (article.body) target.body = article.body;
+      if (article.tagList) target.tagList = article.tagList;
 
       await target.save();
       res.status(200).json({
