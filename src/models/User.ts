@@ -136,6 +136,16 @@ userSchema.method("toUserResponse", function toUserResponse(): ToUserResponse {
   };
 });
 
+userSchema.method("isFollowing", function isFollowing(id: string): boolean {
+  const idString: string = id.toString();
+  for (const followingUser of this.followingUsers) {
+    if (followingUser.toString() === idString) {
+      return true;
+    }
+  }
+  return false;
+});
+
 export interface ToProfileJSON {
   username: string;
   bio: string;
@@ -162,24 +172,13 @@ userSchema.method(
       username: this.username,
       bio: this.bio,
       image: this.image,
-      following: user
-        ? user.isFollowing
-          ? user.isFollowing(user._id)
-          : false
-        : false,
+      following: user?.isFollowing?.(this._id) ?? false,
+
     };
   }
 );
 
-userSchema.method("isFollowing", function isFollowing(id: string): boolean {
-  const idString: string = id.toString();
-  for (const followingUser of this.followingUsers) {
-    if (followingUser.toString() === idString) {
-      return true;
-    }
-  }
-  return false;
-});
+
 
 userSchema.method(
   "follow",
@@ -194,7 +193,7 @@ userSchema.method(
 userSchema.method(
   "unfollow",
   function unfollow(id: Types.ObjectId): Promise<IUser> {
-    if (this.followingUsers.indexOf(id) === -1) {
+    if (this.followingUsers.indexOf(id) !== -1) {
       this.followingUsers.remove(id);
     }
     return this.save();

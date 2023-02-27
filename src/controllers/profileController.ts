@@ -37,7 +37,7 @@ export const getProfile: RequestHandler = async (req, res) => {
 export const followerUser: RequestHandler = async (req, res) => {
   const newReq = req as unknown as JWTNewRequest;
   const { username } = req.params;
-  const loginUser = await User.findOne({ email: newReq.userEmail }).exec();
+  const loginUser = await User.findById(newReq.userId).exec();
   const user = await User.findOne({ username }).exec();
 
   if (!loginUser || !user) {
@@ -51,7 +51,7 @@ export const followerUser: RequestHandler = async (req, res) => {
 export const unFollowerUser: RequestHandler = async (req, res) => {
   const newReq = req as unknown as JWTNewRequest;
   const { username } = req.params;
-  const loginUser = await User.findOne({ email: newReq.userEmail }).exec();
+  const loginUser = await User.findById(newReq.userId).exec();
   const user = await User.findOne({ username }).exec();
 
   if (!loginUser || !user) {

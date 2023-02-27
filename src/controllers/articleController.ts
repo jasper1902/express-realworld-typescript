@@ -8,7 +8,6 @@ export const createArticle: RequestHandler = async (req, res, next) => {
   try {
     const newReq = req as unknown as JWTNewRequest;
     const id = newReq.userId;
-    console.log(id);
 
     const author = await User.findById(id);
 

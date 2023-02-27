@@ -2,7 +2,6 @@ import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import Joi from "joi";
-import createHttpError from "http-errors";
 import { JWTNewRequest } from "./profileController";
 
 // @desc registration for a user
@@ -35,23 +34,23 @@ export const registerUser: RequestHandler<
     // validate user object
     const { error } = userSchema.validate(user);
     if (error) {
-      throw createHttpError(400, error.details[0].message);
+      return res.status(400).json({ error: error.details[0].message });
     }
 
     // confirm data
     if (!user || !user.email || !user.password || !user.username) {
-      throw createHttpError(400, "All fields are required");
+      return res.status(400).json({ error: "All fields are required" });
     }
 
     const emailExist = await User.findOne({ email: user.email });
     const usernameExist = await User.findOne({ username: user.username });
 
     if (emailExist) {
-      throw createHttpError(400, "Email already exists");
+      return res.status(400).json({ error: "Email already exists" });
     }
 
     if (usernameExist) {
-      throw createHttpError(400, "Username already exists");
+      return res.status(400).json({ error: "Username already exists" });
     }
 
     //   hash password
@@ -91,7 +90,7 @@ export const getcurrentUser: RequestHandler = async (req, res, next) => {
     const email = newReq.userEmail;
     const user = await User.findOne({ email }).exec();
     if (!user) {
-      throw createHttpError(404, "User not found");
+      return res.status(404).json({ error: "User not found" });
     }
     res.status(200).json({
       user: user.toUserResponse(),
@@ -129,16 +128,16 @@ export const loginUser: RequestHandler<
     // validate user object
     const { error } = userSchema.validate(user);
     if (error) {
-      throw createHttpError(400, error.details[0].message);
+      return res.status(400).json({ error: error.details[0].message });
     }
 
     if (!user || !user.email || !user.password) {
-      throw createHttpError(400, "All fields are required");
+      return res.status(400).json({ error: "All fields are required" });
     }
     const userAccount = await User.findOne({ email: user.email }).exec();
 
     if (!userAccount) {
-      throw createHttpError(404, "email or password is incorrect");
+      return res.status(404).json({ error: "User not found" });
     }
 
     const validPassword = await bcrypt.compare(
@@ -146,7 +145,7 @@ export const loginUser: RequestHandler<
       userAccount.password
     );
     if (!validPassword) {
-      throw createHttpError(404, "email or password is incorrect");
+      return res.status(401).json({ error: "email or password is incorrect" });
     }
 
     res.status(200).json(userAccount.toUserResponse());
@@ -174,13 +173,13 @@ export const updateUser: RequestHandler = async (req, res, next) => {
 
     const { error } = userSchema.validate(user);
     if (error) {
-      throw createHttpError(400, error.details[0].message);
+      return res.status(400).json({ error: error.details[0].message });
     }
     const newReq = req as unknown as JWTNewRequest;
     const email = newReq.userEmail;
     const targetUser = await User.findOne({ email: email });
     if (!targetUser) {
-      throw createHttpError(400, "User not found");
+      return res.status(404).json({ error: "User not found" });
     }
 
     if (user.email && targetUser.email) {
