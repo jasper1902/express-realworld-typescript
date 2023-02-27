@@ -8,7 +8,9 @@ interface IComment {
 }
 
 interface ICommentMeyhods {
-  toCommentResponse(user: IUser): Promise<ToCommentResponse | undefined>;
+  toCommentResponse(
+    user: IUser | false
+  ): Promise<ToCommentResponse | undefined>;
 }
 
 type CommentModel = Model<IComment, object, ICommentMeyhods>;
@@ -48,7 +50,7 @@ interface ToCommentResponse {
 CommentSchema.method(
   "toCommentResponse",
   async function toCommentResponse(
-    user: IUser
+    user: IUser | false
   ): Promise<ToCommentResponse | undefined> {
     const author = await User.findById(this.author).exec();
 
