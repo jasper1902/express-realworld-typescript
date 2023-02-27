@@ -190,3 +190,123 @@ export const updateArticle: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+export const feedArticles: RequestHandler = async (req, res, next) => {
+  try {
+    const newReq = req as unknown as JWTNewRequest;
+    let limit = 20;
+    let offset = 0;
+
+    if (req.query.limit) {
+      limit = Number(req.query.limit);
+    }
+
+    if (req.query.offset) {
+      offset = Number(req.query.offset);
+    }
+
+    const id = newReq.userId;
+    const loginUser = await User.findById(id).exec();
+
+    if (!loginUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const filteredArticles = await Article.find({
+      author: { $in: loginUser.followingUsers },
+    })
+      .limit(limit)
+      .skip(offset)
+      .exec();
+    const articleCount = await Article.count({
+      author: { $in: loginUser.followingUsers },
+    });
+
+    return res.status(200).json({
+      articles: await Promise.all(
+        filteredArticles.map(async (article) => {
+          return await article.toArticleResponse(loginUser);
+        })
+      ),
+      articlesCount: articleCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listArticles: RequestHandler = async (req, res, next) => {
+  try {
+    const newReq = req as unknown as JWTNewRequest;
+    const id = newReq.userId;
+    const loggedin = newReq.loggedin;
+
+    let limit = 20;
+    let offset = 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = {};
+
+    if (req.query.limit) {
+      limit = Number(req.query.limit);
+    }
+
+    if (req.query.offset) {
+      offset = Number(req.query.offset);
+    }
+    if (req.query.tag) {
+      query.tagList = { $in: [req.query.tag] };
+    }
+
+    if (req.query.author) {
+      const author = await User.findOne({ username: req.query.author }).exec();
+      if (author) {
+        query.author = author._id;
+      }
+    }
+
+    if (req.query.favorited) {
+      const favoriter = await User.findOne({
+        username: req.query.favorited,
+      }).exec();
+      if (favoriter) {
+        query._id = { $in: favoriter.favouriteArticles };
+      }
+    }
+
+    const filteredArticles = await Article.find(query)
+      .limit(Number(limit))
+      .skip(Number(offset))
+      .sort({ createdAt: "desc" })
+      .exec();
+
+    const articleCount = await Article.count(query);
+
+    if (loggedin) {
+      const loginUser = await User.findById(id).exec();
+
+      if (!loginUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      return res.status(200).json({
+        articles: await Promise.all(
+          filteredArticles.map(async (article) => {
+            return await article.toArticleResponse(loginUser);
+          })
+        ),
+        articlesCount: articleCount,
+      });
+    } else {
+      return res.status(200).json({
+        articles: await Promise.all(
+          filteredArticles.map(async (article) => {
+            return await article.toArticleResponse(false);
+          })
+        ),
+        articlesCount: articleCount,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
