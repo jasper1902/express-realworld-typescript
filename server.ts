@@ -12,6 +12,8 @@ import profileRoutes from "./src/routes/profileRoutes";
 import { catchInvalidJsonError } from "./src/middlewares/catchInvalidJsonError";
 import createHttpError, { isHttpError } from "http-errors";
 import articleRoutes from "./src/routes/articleRoutes";
+import tagsRoutes from "./src/routes/tagRoutes";
+import commentRoutes from "./src/routes/commentRoutes";
 
 dotenv.config();
 const app = express();
@@ -51,12 +53,16 @@ if (process.env.MONGO_URI) {
 }
 connectDB(uri);
 
+// tag routes
+app.use("/api/tags", tagsRoutes);
 // user routes - for /api/users and /api/user
 app.use("/api", userRoutes);
 // user routes - for profiles
 app.use("/api/profiles", profileRoutes);
 // article routes
-app.use('/api/articles', articleRoutes);
+app.use("/api/articles", articleRoutes);
+// comment routes
+app.use("/api/articles", commentRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
@@ -72,8 +78,8 @@ app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
   let errorMessage = "An unknown error occurred";
   let statusCode = 500;
   if (isHttpError(error)) {
-      statusCode = error.status;
-      errorMessage = error.message;
+    statusCode = error.status;
+    errorMessage = error.message;
   }
   res.status(statusCode).json({ error: errorMessage });
 });

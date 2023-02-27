@@ -21,6 +21,8 @@ interface IArticle {
 interface IArticleMethods {
   toArticleResponse(user: IUser | false): ToArticleResponse;
   updateFavoriteCount(): Promise<IArticle>;
+  addComment(commentId: Types.ObjectId): Promise<IArticle>;
+  removeComment(commentId: Types.ObjectId): Promise<IArticle>;
 }
 
 type ArticleModel = Model<IArticle, object, IArticleMethods>;
@@ -112,6 +114,28 @@ articleSchema.method(
     });
 
     this.favouritesCount = favoriteCount;
+
+    return this.save();
+  }
+);
+
+articleSchema.method(
+  "addComment",
+  async function addComment(commentId): Promise<IArticle> {
+    if (this.comments.indexOf(commentId) === -1) {
+      this.comments.push(commentId);
+    }
+
+    return this.save();
+  }
+);
+
+articleSchema.method(
+  "removeComment",
+  async function removeComment(commentId): Promise<IArticle> {
+    if (this.comments.indexOf(commentId) !== -1) {
+      this.comments.remove(commentId);
+    }
 
     return this.save();
   }
